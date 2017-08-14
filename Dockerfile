@@ -32,7 +32,7 @@ wget \
 sudo
 
 #安装PHP
-apk --update add php7 \
+RUN apk --update add php7 \
 php7-dev \
 php7-mysqlnd \
 php7-pdo_mysql \
