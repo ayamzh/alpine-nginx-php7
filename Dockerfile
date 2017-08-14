@@ -137,9 +137,9 @@ COPY config/fpm-pool.conf /etc/php7/php-fpm.d/zzz_custom.conf
 COPY config/php.ini /etc/php7/conf.d/zzz_custom.ini
 
 ENV SHELL="/bin/zsh" \
-    LOG_PATH="/data/log/"
-    RUN_PATH="/data/run/"
-    CONF_PATH="/data/conf/"
+    LOG_PATH="/data/log/" \
+    RUN_PATH="/data/run/" \
+    CONF_PATH="/data/conf/" \
     NGINX_LOG_PATH="/data/conf/nginx/conf.d/"
 
 RUN mkdir -p -m 755 ${LOG_PATH}  && \
