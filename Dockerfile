@@ -4,15 +4,11 @@ FROM alpine:latest
 MAINTAINER ayamzh "ayamzh@126.com"
 
 #时区变量
-ENV TIMEZONE Asia/Shanghai
+ENV TIMEZONE="Asia/Shanghai"
 
 #设置语言 更新软件  设置时区
-RUN export LANG=zh_CN.UTF-8 && \
-apk update && \ 
-apk upgrade && \
-apk add --update tzdata &&\
-echo "${TIME_ZONE}" > /etc/timezone &&\
-ln -sf /usr/share/zoneinfo/${TIME_ZONE} /etc/localtime
+RUN export LANG=zh_CN.UTF-8 && apk update && apk upgrade && apk add --update tzdata
+RUN echo $TIMEZONE > /etc/timezone && ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
 
 
 #安装nginx supervisor 等软件
@@ -31,8 +27,8 @@ vimdiff \
 wget \
 sudo
 
-#安装PHP
-RUN apk --update add php7 \
+#安装PHP7
+RUN apk add --update php7 \
 php7-dev \
 php7-mysqlnd \
 php7-pdo_mysql \
@@ -68,7 +64,6 @@ opcache.revalidate_freq=60 \n\
 opcache.fast_shutdown=1 \n\
 opcache.enable_cli=1" > /etc/php7/conf.d/00_opcache.ini
 
-
 #安装mongodb扩展(和kafka所需类库冲突)?
 RUN apk add openssl-dev && \
 pecl install mongodb && \
@@ -98,12 +93,6 @@ RUN pecl install jsond && \
 echo extension=jsond.so > /etc/php7/conf.d/jsond.ini && \
 pecl clear-cache
 
-#安装swoole扩展
-#pecl install swoole
-#echo extension=swoole.so > /etc/php7/conf.d/swoole.ini
-#pecl clear-cache
-
-
 #安装yar扩展
 RUN pecl install yar && \
 echo extension=yar.so > /etc/php7/conf.d/yar.ini && \
@@ -122,19 +111,26 @@ yac.enable_cli=0" > /etc/php7/conf.d/yac.ini && \
 pecl clear-cache
 
 #安装event扩展?
-#apk add libevent-dev
-#pecl install event
-#echo extension=event.so > /etc/php7/conf.d/event.ini
+RUN apk add libevent-dev && \
+pecl install event && \
+echo extension=event.so > /etc/php7/conf.d/event.ini && \
+pecl clear-cache
+
+#安装swoole扩展
+#RUN pecl install swoole && \
+#echo extension=swoole.so > /etc/php7/conf.d/swoole.ini && \
 #pecl clear-cache
 
 #安装composer
 #RUN curl -sS https://getcomposer.org/installer | php && \
 #mv composer.phar /usr/local/bin/composer
 
+#上传配置文件
 COPY config/composer.phar /usr/local/bin/composer
 COPY config/nginx.conf /etc/nginx/nginx.conf
 COPY config/fpm-pool.conf /etc/php7/php-fpm.d/zzz_custom.conf
 COPY config/php.ini /etc/php7/conf.d/zzz_custom.ini
+COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 ENV SHELL="/bin/zsh" \
     LOG_PATH="/data/log/" \
@@ -142,10 +138,10 @@ ENV SHELL="/bin/zsh" \
     CONF_PATH="/data/conf/" \
     NGINX_LOG_PATH="/data/conf/nginx/conf.d/"
 
-RUN mkdir -p -m 755 ${LOG_PATH}  && \
-mkdir -p -m 755 ${RUN_PATH}  && \
-mkdir -p -m 755 ${NGINX_LOG_PATH}
+RUN mkdir -p -m 755 $LOG_PATH  && \
+mkdir -p -m 755 $RUN_PATH  && \
+mkdir -p -m 755 $NGINX_LOG_PATH
 
 EXPOSE 80 443
 
-CMD ["sudo", "/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
